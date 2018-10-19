@@ -22,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.popularmovies.Data.AppDatabase;
 import com.example.android.popularmovies.Data.FavoriteContract;
 import com.example.android.popularmovies.Data.FavoriteDbHelper;
 import com.example.android.popularmovies.Data.TestUtil;
@@ -64,6 +65,8 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     Movie movie_temp;
     Movie mMovie;
     private static final String api_key = "f6adb7bb919d0b253c04644930bc8df3";
+    List<String> ingredients;
+    private AppDatabase mDbroom;
 
 
     private List<Trailer> mTrailer;
@@ -85,6 +88,8 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
         FavoriteDbHelper dbHelper = new FavoriteDbHelper(this);
         mDb = dbHelper.getWritableDatabase();
+
+        mDbroom = AppDatabase.getsInstance(getApplicationContext());
         //TestUtil.insertFakeData(mDb);
         //Cursor cursor = getAllGuests();
        // mAdapter = new FavoriteListAdapter(this, cursor);
@@ -315,8 +320,20 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     public void addNewFav(String id, String posterPath){
 
 
+        int result = Integer.parseInt(id);
+        final Movie favMovie = new Movie(result,mTitle.getText().toString(),mPlot.getText().toString(),mRating.getText().toString(),mDate.getText().toString(),posterPath,ingredients);
+        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                mDbroom.movieFavoritesDao().insert(favMovie);
 
-        ContentValues cv = new ContentValues();
+            }
+        });
+
+
+        Log.d("addNewFav", favMovie.getTitle());
+
+       /* ContentValues cv = new ContentValues();
         cv.put(FavoriteContract.FavoriteEntry.COLUMN_FAVORITE_ID, id);
         cv.put(FavoriteContract.FavoriteEntry.COLUMN_FAVORITE_POSTER_PATH, posterPath);
 
@@ -340,7 +357,7 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
             //ContentResolver resolver = getContentResolver();
 
            // resolver.insert(FavoriteContract.FavoriteEntry.CONTENT_URI,cv);
-        }
+        }*/
 
 
     }

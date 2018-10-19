@@ -1,5 +1,10 @@
 package com.example.android.popularmovies.Model;
 
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
+
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 /**
@@ -10,14 +15,28 @@ import java.util.List;
  user rating (called vote_average in the api)
  release date
  */
-
+@Entity(tableName = "favorites")
 public class Movie {
 
+    @PrimaryKey
+    @SerializedName("id")
+    private int mId;
+
+
+    @SerializedName("title")
     private String mTitle;
-    private List<String> alsoKnownAs = null;
+
+
+    @SerializedName("plot")
     private String mPlot;
+
+    @SerializedName("rating")
     private String mRating;
+
+    @SerializedName("release_date")
     private String mDate;
+
+    @SerializedName("image")
     private String mImage;
 
     /**
@@ -26,7 +45,8 @@ public class Movie {
     public Movie() {
     }
 
-    public Movie(String title, String plot, String rating, String date, String image, List<String> ingredients) {
+    public Movie(int id, String title, String plot, String rating, String date, String image, List<String> ingredients) {
+        this.mId = id;
         this.mTitle = title;
         this.mPlot = plot;
         this.mRating = rating;
@@ -38,7 +58,7 @@ public class Movie {
         return mTitle;
     }
 
-    public void setmTitle(String title) {
+    public void setTitle(String title) {
         this.mTitle = title;
     }
 
@@ -76,4 +96,12 @@ public class Movie {
         return mImage;
     }
 
+
+    public int getId() {
+        return mId;
+    }
+
+    public void setId(int Id) {
+        this.mId = Id;
+    }
 }

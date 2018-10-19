@@ -1,5 +1,7 @@
 package com.example.android.popularmovies;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.ColorInt;
+import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -28,10 +31,12 @@ import android.widget.Toast;
 import com.example.android.popularmovies.Data.FavoriteContract;
 import com.example.android.popularmovies.Data.MoviesContentProvider;
 import com.example.android.popularmovies.Data.SortPreferences;
+import com.example.android.popularmovies.Model.Movie;
 import com.example.android.popularmovies.utils.JsonUtils;
 import com.example.android.popularmovies.utils.NetworkUtils;
 
 import java.net.URL;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements recyclerAdapter.recyclerAdapterOnClickHandler, LoaderManager.LoaderCallbacks<String[]>,SharedPreferences.OnSharedPreferenceChangeListener {
     RecyclerView recyclerView;
@@ -47,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
     private MoviesContentProvider mCP;
     MoviesContentProvider moviesContentProvider = new MoviesContentProvider();
     String[] moviesPosterPath;
+    List<Movie> mFavorites;
 
     private static final int MOVIE_LOADER_ID = 0;
     @Override
@@ -154,9 +160,12 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
 
 
     public String[] getAllFavorite(){
-
-
-        int Moive_Fav = 201;
+        loadSavedFavorites();
+        String[] paths = {"",""};
+        Log.d("loaded favs", String.valueOf(mFavorites));
+       // Toast.makeText(this, (CharSequence) mFavorites,Toast.LENGTH_LONG);
+        return paths;
+       /* int Moive_Fav = 201;
 
 
        //Cursor cursor =  mCP.query(FavoriteContract.BASE_URI,null,null,null,null);
@@ -173,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
                 null,
                 null
         );
-*/
+
         if(cursor != null){
             String[] movieImagePaths = new String[cursor.getCount()];
             cursor.moveToFirst();
@@ -188,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
             return null;
         }
 
+*/
     }
 
     @Override
@@ -292,4 +302,24 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
         startActivity(intentToStartDetailActivity);
     }
 
+    private void loadSavedFavorites() {
+        MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        viewModel.getFavorites().observe(this, new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(@Nullable List<Movie> favoriteList) {
+                Log.d("getFavs", "Updating list of favorites from LiveData in ViewModel");
+                mFavorites = favoriteList;
+
+               // if (mSortingBy.equals(FAVORITES)) {
+                    //mMovies = favoriteList;
+                    mFavorites = favoriteList;
+                    //viewFavorites(mMovies);
+
+                   // if (mMovies.size() < 1) {
+                    //    Toast.makeText(getApplicationContext(), R.string.noSavedFavoritesMessage, Toast.LENGTH_LONG).show();
+                   // }
+              //  }
+            }
+        });
+    }
 }

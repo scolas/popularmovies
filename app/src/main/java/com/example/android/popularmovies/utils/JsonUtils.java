@@ -99,7 +99,7 @@ public class JsonUtils {
 
         JSONObject movieJson = new JSONObject(json);
 
-        movie.setmTitle(movieJson.getString("original_title"));
+        movie.setTitle(movieJson.getString("original_title"));
         movie.setImage(movieJson.getString("poster_path"));
         movie.setPlot(movieJson.getString("overview"));
         movie.setRating(movieJson.getString("vote_average"));
