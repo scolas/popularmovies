@@ -75,6 +75,9 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
         int loaderId = MOVIE_LOADER_ID;
         setupSharedPreferences();
 
+        if(PREFERENCES_HAVE_BEEN_UPDATED){adapter.notifyDataSetChanged();}
+
+        loadSavedFavorites();
         LoaderManager.LoaderCallbacks<String[]> callback = MainActivity.this;
 
 
@@ -161,43 +164,28 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
 
     public String[] getAllFavorite(){
         loadSavedFavorites();
-        String[] paths = {"",""};
-        Log.d("loaded favs", String.valueOf(mFavorites));
-       // Toast.makeText(this, (CharSequence) mFavorites,Toast.LENGTH_LONG);
-        return paths;
-       /* int Moive_Fav = 201;
+        int i = 0;
 
+        if(mFavorites == null){
+            String[] paths = {" "," "};
+            return paths;
+        }
+        if(mFavorites.size() < 1){
+            String[] paths = {" "," "};
+            return paths;
+        }
+        String[] paths = new String[10];
 
-       //Cursor cursor =  mCP.query(FavoriteContract.BASE_URI,null,null,null,null);
-
-        ContentResolver resolver = getContentResolver();
-        Cursor cursor = getContentResolver().query(FavoriteContract.FavoriteEntry.CONTENT_URI,null,null,null,null);
-        //Cursor cursor = mDb.query(FavoriteContract.FavoriteEntry.CONTENT_URI,null,null,null,null);
-        /*Cursor cursor =  mDb.query(
-                FavoriteContract.FavoriteEntry.TABLE_NAME,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        if(cursor != null){
-            String[] movieImagePaths = new String[cursor.getCount()];
-            cursor.moveToFirst();
-            for(int i=0; i<cursor.getCount(); i++){
-                cursor.moveToPosition(i);
-                String path = cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_FAVORITE_POSTER_PATH));
-                movieImagePaths[i] = path;
-            }
-            Log.d("favorite data", movieImagePaths.toString());
-            return movieImagePaths;
-        }else{
-            return null;
+        int numOfMovies = mFavorites.size();
+        for(Movie movie : mFavorites){
+            //int mov = movie.getVideo();
+            paths[i] = movie.getVideo();
+            i++;
         }
 
-*/
+        Log.d("loaded favs", String.valueOf(paths));
+        return paths;
+
     }
 
     @Override
@@ -310,15 +298,6 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
                 Log.d("getFavs", "Updating list of favorites from LiveData in ViewModel");
                 mFavorites = favoriteList;
 
-               // if (mSortingBy.equals(FAVORITES)) {
-                    //mMovies = favoriteList;
-                    mFavorites = favoriteList;
-                    //viewFavorites(mMovies);
-
-                   // if (mMovies.size() < 1) {
-                    //    Toast.makeText(getApplicationContext(), R.string.noSavedFavoritesMessage, Toast.LENGTH_LONG).show();
-                   // }
-              //  }
             }
         });
     }

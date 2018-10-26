@@ -1,5 +1,7 @@
 package com.example.android.popularmovies;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -60,13 +63,14 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     String movieID;
     ImageView posterIv;
     private FavoriteListAdapter mAdapter;
-    private SQLiteDatabase mDb;
     private Button markFav;
     Movie movie_temp;
     Movie mMovie;
     private static final String api_key = "f6adb7bb919d0b253c04644930bc8df3";
+    private int FAVORITED = 0;
     List<String> ingredients;
     private AppDatabase mDbroom;
+    List<Movie> mFavorites;
 
 
     private List<Trailer> mTrailer;
@@ -87,7 +91,7 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
 
         FavoriteDbHelper dbHelper = new FavoriteDbHelper(this);
-        mDb = dbHelper.getWritableDatabase();
+
 
         mDbroom = AppDatabase.getsInstance(getApplicationContext());
         //TestUtil.insertFakeData(mDb);
@@ -306,7 +310,9 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     public void addToFavoriteList(View view){
         //Toast.makeText(this, "addTofavorite", Toast.LENGTH_SHORT).show();
         String path = "http://image.tmdb.org/t/p/w342/"+ movieID.toString();
-        addNewFav(movieID, path);
+
+        //addNewFav(movieID, path);
+        addNewFav(movieID, path, movie_temp.getImage());
         //mAdapter.swapCursor(getAllGuests());
 
     }
@@ -317,11 +323,11 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
 
 
-    public void addNewFav(String id, String posterPath){
+    public void addNewFav(String id, String posterPath, String image){
 
-
+        loadSavedFavorites();
         int result = Integer.parseInt(id);
-        final Movie favMovie = new Movie(result,mTitle.getText().toString(),mPlot.getText().toString(),mRating.getText().toString(),mDate.getText().toString(),posterPath,ingredients);
+        final Movie favMovie = new Movie(result,mTitle.getText().toString(),mPlot.getText().toString(),mRating.getText().toString(),mDate.getText().toString(),posterPath,ingredients, image);
         AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
@@ -330,86 +336,61 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
             }
         });
 
-
+        Toast.makeText(this, "movie added", Toast.LENGTH_SHORT).show();
         Log.d("addNewFav", favMovie.getTitle());
 
-       /* ContentValues cv = new ContentValues();
-        cv.put(FavoriteContract.FavoriteEntry.COLUMN_FAVORITE_ID, id);
-        cv.put(FavoriteContract.FavoriteEntry.COLUMN_FAVORITE_POSTER_PATH, posterPath);
 
 
-        Cursor cursor = getMovie(id);
-        if(cursor != null ){
-            if(cursor.getCount() > 1){
-                removeFav(id);
-                Toast.makeText(this, "movie removed", Toast.LENGTH_SHORT).show();
-            }
-
-
-
-        }else{
-
-            Log.d("addNewFav", "return mDb"+ cursor.getCount());
-            Toast.makeText(this, "movie added", Toast.LENGTH_SHORT).show();
-
-            mDb.insert(FavoriteContract.FavoriteEntry.TABLE_NAME, null, cv);
-
-            //ContentResolver resolver = getContentResolver();
-
-           // resolver.insert(FavoriteContract.FavoriteEntry.CONTENT_URI,cv);
-        }*/
 
 
     }
 
 
     private boolean removeFav(String id) {
-        return mDb.delete(FavoriteContract.FavoriteEntry.TABLE_NAME, FavoriteContract.FavoriteEntry._ID + "=" + id, null) > 0;
+        int result = Integer.parseInt(id);
+            int movieId = mMovie.getId();
+            String movieTitle = mMovie.getTitle();
+            String releaseDate = mMovie.getDate();
+            String overView = mMovie.getPlot();
+            String posterPath = mMovie.getImage();
+            String voteAverage = mMovie.getRating();
+
+            final Movie favMovie = new Movie(result,mTitle.getText().toString(),mPlot.getText().toString(),mRating.getText().toString(),mDate.getText().toString(),posterPath,ingredients, movie_temp.getImage());
+            AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+                @Override
+                public void run() {
+                    mDbroom.movieFavoritesDao().delete(favMovie);
+                }
+            });
+
+
+        Toast.makeText(this, "movie removed", Toast.LENGTH_SHORT).show();
+        return true;
     }
 
 
 
-    private Cursor getAllGuests() {
-        // COMPLETED (6) Inside, call query on mDb passing in the table name and projection String [] order by COLUMN_TIMESTAMP
-        return mDb.query(
-                FavoriteContract.FavoriteEntry.TABLE_NAME,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-    }
 
-    private Cursor getMovie(String id) {
-        String [] selection = {id};
-        return mDb.query(
-                FavoriteContract.FavoriteEntry.TABLE_NAME,
-                null,
-                FavoriteContract.FavoriteEntry.COLUMN_FAVORITE_ID + "=?",
-                selection,
-                null,
-                null,
-                null
-        );
-    }
 
+
+    private void loadSavedFavorites() {
+        MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        viewModel.getFavorites().observe(this, new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(@Nullable List<Movie> favoriteList) {
+                Log.d("getFavs", "Updating list of favorites from LiveData in ViewModel");
+                mFavorites = favoriteList;
+
+            }
+        });
+    }
 
     private void closeOnError() {
         finish();
         Toast.makeText(this, R.string.detail_error_message, Toast.LENGTH_SHORT).show();
     }
 
-    private void populateUI(String[] movie) {
 
-        mTitle.setText(movie[1]);
-        //mPlot.setText(movie.getPlot());
-        //mRating.setText(movie.getRating());
-        //mDate.setText(movie.getDate());
-
-
-    }
 
 
 
@@ -433,7 +414,8 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
         switch (action){
             case R.id.markFav:
                 String path = "http://image.tmdb.org/t/p/w342/"+ movieID.toString();
-                addNewFav(movieID, path);
+
+                addNewFav(movieID, path, movie_temp.getImage());
                 //addToFavoriteList(view);
 
         }

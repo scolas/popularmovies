@@ -26,6 +26,8 @@ public class Movie {
     @SerializedName("title")
     private String mTitle;
 
+    @SerializedName("video")
+    private String mVideo;
 
     @SerializedName("plot")
     private String mPlot;
@@ -36,8 +38,9 @@ public class Movie {
     @SerializedName("release_date")
     private String mDate;
 
-    @SerializedName("image")
+    @SerializedName("poster_path")
     private String mImage;
+
 
     /**
      * No args constructor for use in serialization
@@ -45,13 +48,14 @@ public class Movie {
     public Movie() {
     }
 
-    public Movie(int id, String title, String plot, String rating, String date, String image, List<String> ingredients) {
+    public Movie(int id, String title, String plot, String rating, String date, String image, List<String> ingredients, String mImage2) {
         this.mId = id;
         this.mTitle = title;
         this.mPlot = plot;
         this.mRating = rating;
         this.mImage = image;
         this.mDate = date;
+        this.mVideo = mImage2;
     }
 
     public String getTitle() {
@@ -103,5 +107,13 @@ public class Movie {
 
     public void setId(int Id) {
         this.mId = Id;
+    }
+
+    public String getVideo() {
+        return mVideo;
+    }
+
+    public void setVideo(String mImage2) {
+        this.mVideo = mImage2;
     }
 }
