@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Parcelable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
@@ -36,10 +37,12 @@ import com.example.android.popularmovies.utils.JsonUtils;
 import com.example.android.popularmovies.utils.NetworkUtils;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements recyclerAdapter.recyclerAdapterOnClickHandler, LoaderManager.LoaderCallbacks<String[]>,SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends AppCompatActivity implements recyclerAdapter.recyclerAdapterOnClickHandler, LoaderManager.LoaderCallbacks<String[]>,SharedPreferences.OnSharedPreferenceChangeListener, ListItemClickListener {
     RecyclerView recyclerView;
+    RecyclerView recyclerView1;
     recyclerAdapter adapter;
     int items = 10;
     static int numOfCol = 2;
@@ -54,6 +57,15 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
     String[] moviesPosterPath;
     List<Movie> mFavorites;
 
+    String[] mMovieData = null;
+    RecyclerView.LayoutManager mLayoutManager;
+
+
+    List<Movie> mMovies;
+    private MovieAdapter mAdapter;
+    Parcelable mListState;
+
+
     private static final int MOVIE_LOADER_ID = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,13 +76,15 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
         mErrorMessageDisplay = (TextView) findViewById(R.id.tv_error_message_display);
         mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(new GridLayoutManager(this, numOfCol));
 
         adapter = new recyclerAdapter(this);
 
         recyclerView.setAdapter(adapter);
 
+        mMovies = new ArrayList<>();
+        mAdapter = new MovieAdapter(mMovies, this);
+        mAdapter.setMovies(mMovies);
 
         int loaderId = MOVIE_LOADER_ID;
         setupSharedPreferences();
@@ -93,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
     public Loader<String[]> onCreateLoader(int id, Bundle args) {
         return new AsyncTaskLoader<String[]>(this) {
 
-            String[] mMovieData = null;
+
 
 
             @Override
@@ -110,14 +124,16 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
             @Override
             public String[] loadInBackground() {
 
-                //String sortOrder = SortPreferences.
+
                 String locationQuery = SortPreferences
                         .getPreferredSorting(MainActivity.this);
                 URL movieRequestUrl = NetworkUtils.buildUrl();
-                //locationQuery = "favorite";
+
                 if(locationQuery == "highest_rated"){
                     movieRequestUrl = NetworkUtils.buildTopUrl();
                 }else if(locationQuery == "favorite"){
+
+                     
                     return getAllFavorite();
                 }
                 else{
@@ -127,13 +143,11 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
                 try {
                     String jsonMovieResponse = NetworkUtils
                             .getResponseFromHttpUrl(movieRequestUrl);
-                    //Log.e(" this is thejson",""+jsonMovieResponse);
                     moviesPosterPath = JsonUtils.parseMoviesJson(jsonMovieResponse);
                     moviesId = JsonUtils.parseMoviesIdJson(jsonMovieResponse);
 
 
                     return moviesPosterPath;
-                    //return getAllFavorite();
                 } catch (Exception e) {
                     e.printStackTrace();
 
@@ -151,12 +165,13 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
 
     @Override
     public void onLoadFinished(Loader<String[]> loader, String[] data) {
-        mLoadingIndicator.setVisibility(View.INVISIBLE);
-        adapter.setMovieData(data);
+       // mLoadingIndicator.setVisibility(View.INVISIBLE);
+       // adapter.setMovieData(data);
         if (null == data) {
-            showErrorMessage();
+        //    showErrorMessage();
         } else {
-            showMovieDataView();
+          //  showMovieDataView();
+            //adapter.notifyDataSetChanged();
         }
 
     }
@@ -165,18 +180,20 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
     public String[] getAllFavorite(){
         loadSavedFavorites();
         int i = 0;
+        String[] paths = new String[10];
 
         if(mFavorites == null){
-            String[] paths = {" "," "};
+            //paths = {" "," "};
+            Log.d("loaded favs", "mfav null");
             return paths;
         }
         if(mFavorites.size() < 1){
-            String[] paths = {" "," "};
+            //paths = {" "," "};
+            Log.d("loaded favs", "mfav size");
             return paths;
         }
-        String[] paths = new String[10];
 
-        int numOfMovies = mFavorites.size();
+
         for(Movie movie : mFavorites){
             //int mov = movie.getVideo();
             paths[i] = movie.getVideo();
@@ -297,8 +314,45 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
             public void onChanged(@Nullable List<Movie> favoriteList) {
                 Log.d("getFavs", "Updating list of favorites from LiveData in ViewModel");
                 mFavorites = favoriteList;
+                mMovies = favoriteList;
 
             }
         });
+    }
+
+
+
+    private void viewFavorites(List<Movie> favorites) {
+
+        if (favorites != null) {
+            mMovies = favorites;
+        }
+        generateMovieList(mMovies);
+        recyclerView1.getAdapter().notifyDataSetChanged();
+        if (mMovies.size() < 1) {
+            //Toast.makeText(getApplicationContext(), "no favorite", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    private void generateMovieList(List<Movie> movieList) {
+        mAdapter = new MovieAdapter(movieList, this);
+        mAdapter.setMovies(movieList);
+        recyclerView1.setAdapter(mAdapter);
+        mLayoutManager = new GridLayoutManager(this, 2);
+
+        //Restore adapter to maintain scroll position
+
+        if (mListState != null) {
+            mLayoutManager.onRestoreInstanceState(mListState);
+        }
+
+        recyclerView1.setLayoutManager(mLayoutManager);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onListItemClick(int clickedItemIndex) {
+
     }
 }

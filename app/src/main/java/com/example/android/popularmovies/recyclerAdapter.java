@@ -17,6 +17,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.zip.Inflater;
 
+import static java.security.AccessController.getContext;
+
 /**
  * Created by scott on 5/6/18.
  */
@@ -88,8 +90,9 @@ public class recyclerAdapter extends RecyclerView.Adapter<recyclerAdapter.recycl
     @Override
     public void onBindViewHolder(recyclerAdapterViewHolder holder, int position) {
         String moviePoster = mMovieData[position];
+        Picasso.get().load("http://image.tmdb.org/t/p/w342/"+moviePoster).into(holder.mitemView);
 
-        Picasso.with(holder.mitemView.getContext()).load("http://image.tmdb.org/t/p/w342/"+moviePoster).into(holder.mitemView);
+        //Picasso.with(holder.mitemView.getContext()).load("http://image.tmdb.org/t/p/w342/"+moviePoster).into(holder.mitemView);
         //holder.mitemView.setImageResource(R.drawable.blackpanther);
         //holder.bind(position);
     }

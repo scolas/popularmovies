@@ -44,6 +44,7 @@ import org.json.JSONException;
 
 import java.net.URL;
 import java.util.List;
+import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -85,6 +86,7 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
         //favoriteRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
 
+        loadSavedFavorites();
 
         markFav = (Button) this.findViewById(R.id.markFav);
         markFav.setOnClickListener(this);
@@ -295,7 +297,8 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     private void showMovieDataView(Movie movie) {
-        Picasso.with(this).load("http://image.tmdb.org/t/p/w342/"+movie.getImage()).into(posterIv);
+        //Picasso.with(this).load("http://image.tmdb.org/t/p/w342/"+movie.getImage()).into(posterIv);
+        Picasso.get().load("http://image.tmdb.org/t/p/w342/"+movie.getImage()).into(posterIv);
         this.getTrailer();
         this.getReview();
         mTitle.setText(movie.getTitle());
@@ -323,11 +326,23 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
 
 
-    public void addNewFav(String id, String posterPath, String image){
+    public int addNewFav(String id, String posterPath, String image){
 
-        loadSavedFavorites();
+
+
         int result = Integer.parseInt(id);
+        int i = 0;
         final Movie favMovie = new Movie(result,mTitle.getText().toString(),mPlot.getText().toString(),mRating.getText().toString(),mDate.getText().toString(),posterPath,ingredients, image);
+
+
+        int[] ids = new int[mFavorites.size()];
+        for(Movie movie : mFavorites){
+            if(result == movie.getId()){
+               removeFav(result);
+               return 1;
+            }
+        }
+
         AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
@@ -338,7 +353,7 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
         Toast.makeText(this, "movie added", Toast.LENGTH_SHORT).show();
         Log.d("addNewFav", favMovie.getTitle());
-
+        return 1;
 
 
 
@@ -346,8 +361,8 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     }
 
 
-    private boolean removeFav(String id) {
-        int result = Integer.parseInt(id);
+    private void removeFav(int id) {
+        int result = id;
             int movieId = mMovie.getId();
             String movieTitle = mMovie.getTitle();
             String releaseDate = mMovie.getDate();
@@ -365,7 +380,7 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
 
         Toast.makeText(this, "movie removed", Toast.LENGTH_SHORT).show();
-        return true;
+
     }
 
 
