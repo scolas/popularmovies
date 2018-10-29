@@ -133,7 +133,6 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
                     movieRequestUrl = NetworkUtils.buildTopUrl();
                 }else if(locationQuery == "favorite"){
 
-                     
                     return getAllFavorite();
                 }
                 else{
@@ -165,13 +164,13 @@ public class MainActivity extends AppCompatActivity implements recyclerAdapter.r
 
     @Override
     public void onLoadFinished(Loader<String[]> loader, String[] data) {
-       // mLoadingIndicator.setVisibility(View.INVISIBLE);
-       // adapter.setMovieData(data);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+        adapter.setMovieData(data);
         if (null == data) {
-        //    showErrorMessage();
+           showErrorMessage();
         } else {
-          //  showMovieDataView();
-            //adapter.notifyDataSetChanged();
+          showMovieDataView();
+          adapter.notifyDataSetChanged();
         }
 
     }
